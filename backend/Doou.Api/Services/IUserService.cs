@@ -1,5 +1,6 @@
 ﻿using Doou.Api.DTO.Requests;
 using Doou.Api.Models;
+using Doou.Api.Models.Responses;
 
 namespace Doou.Api.Services
 {
@@ -7,8 +8,8 @@ namespace Doou.Api.Services
     {
         Task<IEnumerable<User>> GetAllAsync();
         Task<User?> GetByIdAsync(int id);
-        Task<User> CreateAsync(CreateUserRequestDto dto);
-        Task<User?> UpdateAsync(int id, User user);
+        Task<ApiResponse<User>> CreateAsync(UserRequestDto dto);
+        Task<ApiResponse<User>> UpdateAsync(UpdateUserDto dto);
         Task<bool> DeleteAsync(int id);
     }
 }

@@ -1,9 +1,10 @@
-﻿namespace Doou.Api.DTO.Responses
+﻿using Doou.Api.Models;
+
+namespace Doou.Api.DTO.Responses
 {
-    public class UserResponseDto
+    internal class UserResponseDto : User
     {
-        public int UserId { get; set; }
-        public string? Name { get; set; }
-        public string? Email { get; set; }
+        public new int UserId { get; set; }
+        public new string Name { get; set; }
     }
 }

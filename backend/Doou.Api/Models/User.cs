@@ -19,16 +19,19 @@ namespace Doou.Api.Models
 
         [Required]
         [EmailAddress]
-        public string? Email { get; set; }
+        public required string Email { get; set; }
 
         [Required]
         public DateTime BirthDate { get; set; }
 
         [Required]
-        public string? Address { get; set; }
+        public required string Address { get; set; }
 
         [Required]
         [JsonIgnore] // senha não será exibida no Swagger ou na resposta
-        public string? Password { get; set; }
+        public required string Password { get; set; }
+
+        public int ResetPasswordToken { get; set; }
+        public DateTime? ResetPasswordExpiration { get; set; }
     }
 }

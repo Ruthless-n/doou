@@ -5,17 +5,15 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Doou.Api.Controllers
 {
-    [ApiController]
     [Route("api/[controller]")]
+    [ApiController]
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
-
         public UserController(IUserService userService)
         {
             _userService = userService;
         }
-
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -31,20 +29,25 @@ namespace Doou.Api.Controllers
             return Ok(user);
         }
 
-        [HttpPost("create")]
-        public async Task<IActionResult> Create(CreateUserRequestDto dto)
+        [HttpPost("register")]
+        public async Task<IActionResult> Create(UserRequestDto dto)
         {
             var response = await _userService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new 
-            { id = response.UserId }, response);
+            return CreatedAtAction(nameof(GetById), new
+            { id = response.Data?.UserId }, response);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, User user)
+        public async Task<IActionResult> Update(UpdateUserDto dto)
         {
-            var updated = await _userService.UpdateAsync(id, user);
-            if (updated == null) return NotFound();
-            return Ok(updated);
+            var updated = await _userService.UpdateAsync(dto);
+            if (!updated.Success)
+                return BadRequest(updated);
+
+            if (updated.Data?.UserId != null)
+                return CreatedAtAction(nameof(GetById), new { id = updated.Data.UserId }, updated);
+
+            return Created(string.Empty, updated);
         }
 
         [HttpDelete("{id}")]
