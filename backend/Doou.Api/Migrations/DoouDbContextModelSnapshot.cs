@@ -146,6 +146,12 @@ namespace Doou.Api.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("ResetPasswordExpiration")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("ResetPasswordToken")
+                        .HasColumnType("integer");
+
                     b.HasKey("UserId");
 
                     b.ToTable("Users");

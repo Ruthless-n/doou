@@ -11,9 +11,9 @@ namespace Doou.Api.Controllers
     {
         private readonly IAuthService _authService;
 
-        public AuthController(AuthService userService)
+        public AuthController(IAuthService authService)
         {
-            _authService = (IAuthService)userService;
+            _authService = authService;
         }
 
         /// <summary>
@@ -29,8 +29,8 @@ namespace Doou.Api.Controllers
         /// <summary>
         /// Solicita redefinição de senha. Gera token de 6 dígitos e envia por e-mail.
         /// </summary>
-        [HttpPost("forgot-request")]
-        public async Task<IActionResult> ResetPasswordRequest([FromBody] string email)
+        [HttpPost("forgot-password")]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto email)
         {
             var result = await _authService.ForgotPasswordAsync(email);
             if (!result.Success)

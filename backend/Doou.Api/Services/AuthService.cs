@@ -74,9 +74,9 @@ namespace Doou.Api.Services
             }
         }
 
-        public Task<ApiResponse<bool>> ForgotPasswordAsync(string email)
+        public Task<ApiResponse<bool>> ForgotPasswordAsync(ForgotPasswordDto dto)
         {
-            var user = _dbContext.Users.FirstOrDefault(u => u.Email == email);
+            var user = _dbContext.Users.FirstOrDefault(u => u.Email == dto.Email);
 
             if (user == null)
             {
@@ -164,17 +164,31 @@ namespace Doou.Api.Services
         }
         private void SendEmail(string to, string subject, string body)
         {
-            var smtpHost = _configuration["Smtp:Host"];
-            var smtpPort = int.Parse(_configuration["Smtp:Port"]);
-            var smtpUser = _configuration["Smtp:User"];
-            var smtpPass = _configuration["Smtp:Password"];
+            var smtpHost = Environment.GetEnvironmentVariable("SMTP_HOST");
+            var smtpPortStr = Environment.GetEnvironmentVariable("SMTP_PORT");
+            var smtpUser = Environment.GetEnvironmentVariable("SMTP_USER");
+            var smtpPass = Environment.GetEnvironmentVariable("SMTP_PASSWORD");
 
-            using var client = new SmtpClient(smtpHost, smtpPort);
-            client.Credentials = new System.Net.NetworkCredential(smtpUser, smtpPass);
-            client.EnableSsl = true;
+            if (string.IsNullOrEmpty(smtpHost) || string.IsNullOrEmpty(smtpPortStr)
+                || string.IsNullOrEmpty(smtpUser) || string.IsNullOrEmpty(smtpPass))
+            {
+                throw new Exception("Configurações SMTP ausentes no .env");
+            }
+
+            if (!int.TryParse(smtpPortStr, out int smtpPort))
+            {
+                throw new Exception("SMTP_PORT não é um número válido.");
+            }
+
+            using var client = new SmtpClient(smtpHost, smtpPort)
+            {
+                Credentials = new System.Net.NetworkCredential(smtpUser, smtpPass),
+                EnableSsl = true
+            };
 
             var mail = new MailMessage(smtpUser, to, subject, body);
             client.Send(mail);
         }
+
     }
 }

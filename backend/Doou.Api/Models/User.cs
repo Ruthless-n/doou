@@ -28,8 +28,8 @@ namespace Doou.Api.Models
         public required string Address { get; set; }
 
         [Required]
-        [JsonIgnore] // senha não será exibida no Swagger ou na resposta
-        public required string Password { get; set; }
+        [JsonIgnore]
+        public string? Password { get; set; }
 
         public int ResetPasswordToken { get; set; }
         public DateTime? ResetPasswordExpiration { get; set; }
