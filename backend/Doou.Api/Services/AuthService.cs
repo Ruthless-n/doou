@@ -3,8 +3,6 @@ using Doou.Api.DTO.Requests;
 using Doou.Api.Helpers;
 using Doou.Api.Models;
 using Doou.Api.Models.Responses;
-using Microsoft.EntityFrameworkCore;
-using System;
 using System.Net.Mail;
 using System.Security.Claims;
 using System.Text;
@@ -52,7 +50,6 @@ namespace Doou.Api.Services
 
                 var token = string.Empty;
                 token = GenerateJwtToken(user);
-
                 return Task.FromResult(new ApiResponse<string>
                     {
                         Success = true,
@@ -146,19 +143,28 @@ namespace Doou.Api.Services
 
         private string GenerateJwtToken(User user)
         {
-            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]);
+            var key = _configuration["JWT_SECRET"];
+            var issuer = _configuration["JWT_ISSUER"];
+            var audience = _configuration["JWT_AUDIENCE"];
+            var expiryMinutesStr = _configuration["JWT_EXPIRATION_MINUTES"];
+
+            var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
+            var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
             var claims = new[]
             {
-                new Claim("id", user.UserId.ToString()),
-                new Claim(ClaimTypes.Email, value: user.Email)
+                new Claim(JwtRegisteredClaimNames.Sub, user.UserId.ToString()),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
-            var creds = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256);
-            var jwtToken = new System.IdentityModel.Tokens.Jwt.JwtSecurityToken(
+            var jwtToken = new JwtSecurityToken(
+                issuer: issuer,
+                audience: audience,
                 claims: claims,
-                expires: DateTime.UtcNow.AddHours(2),
-                signingCredentials: creds
-            ); 
+                expires: DateTime.UtcNow.AddMinutes(int.Parse(expiryMinutesStr)),
+                signingCredentials: credentials
+            );
 
             return new JwtSecurityTokenHandler().WriteToken(jwtToken);
         }
@@ -169,25 +175,38 @@ namespace Doou.Api.Services
             var smtpUser = Environment.GetEnvironmentVariable("SMTP_USER");
             var smtpPass = Environment.GetEnvironmentVariable("SMTP_PASSWORD");
 
-            if (string.IsNullOrEmpty(smtpHost) || string.IsNullOrEmpty(smtpPortStr)
-                || string.IsNullOrEmpty(smtpUser) || string.IsNullOrEmpty(smtpPass))
+            try
             {
-                throw new Exception("Configurações SMTP ausentes no .env");
+                if (string.IsNullOrEmpty(smtpHost) || string.IsNullOrEmpty(smtpPortStr)
+                    || string.IsNullOrEmpty(smtpUser) || string.IsNullOrEmpty(smtpPass))
+                {
+                    throw new Exception("Configurações SMTP ausentes no .env");
+                }
+
+                if (!int.TryParse(smtpPortStr, out int smtpPort))
+                {
+                    throw new Exception("SMTP_PORT não é um número válido.");
+                }
+
+                using var client = new SmtpClient(smtpHost, smtpPort)
+                {
+                    Credentials = new System.Net.NetworkCredential(smtpUser, smtpPass),
+                    EnableSsl = true
+                };
+
+                var mail = new MailMessage(smtpUser, to, subject, body);
+                client.Send(mail);
+
             }
 
-            if (!int.TryParse(smtpPortStr, out int smtpPort))
+            catch (SmtpException ex)
             {
-                throw new Exception("SMTP_PORT não é um número válido.");
+                throw new Exception($"Erro SMTP: {ex.StatusCode} - {ex.Message}");
             }
-
-            using var client = new SmtpClient(smtpHost, smtpPort)
+            catch (Exception ex)
             {
-                Credentials = new System.Net.NetworkCredential(smtpUser, smtpPass),
-                EnableSsl = true
-            };
-
-            var mail = new MailMessage(smtpUser, to, subject, body);
-            client.Send(mail);
+                throw new Exception($"Erro inesperado ao enviar e-mail: {ex.Message}");
+            }
         }
 
     }

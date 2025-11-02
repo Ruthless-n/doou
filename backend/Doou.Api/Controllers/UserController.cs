@@ -1,6 +1,7 @@
 ﻿using Doou.Api.DTO.Requests;
 using Doou.Api.Models;
 using Doou.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Doou.Api.Controllers
@@ -21,6 +22,7 @@ namespace Doou.Api.Controllers
             return Ok(user);
         }
 
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -37,6 +39,7 @@ namespace Doou.Api.Controllers
             { id = response.Data?.UserId }, response);
         }
 
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(UpdateUserDto dto)
         {
@@ -50,6 +53,7 @@ namespace Doou.Api.Controllers
             return Created(string.Empty, updated);
         }
 
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
